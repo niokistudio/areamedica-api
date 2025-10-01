@@ -1,0 +1,109 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "areamedica-api"
+version = "1.0.0"
+description = "Banking Transaction Management System"
+authors = [
+    {name = "José Cabrera", email = "jose@niokistudio.com"}
+]
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "N",  # pep8-naming
+    "S",  # flake8-bandit
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "S101", # use of assert detected (allow in tests)
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["S101", "S106"]
+"migrations/*" = ["S608"]
+
+[tool.ruff.isort]
+known-first-party = ["src"]
+split-on-trailing-comma = true
+
+[tool.black]
+target-version = ['py311']
+line-length = 88
+skip-string-normalization = true
+
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+exclude = [
+    "migrations/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "alembic.*",
+    "prometheus_client.*",
+    "structlog.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=85"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests"
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "tests/*",
+    "*/migrations/*",
+    "*/__init__.py",
+    "*/conftest.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+]
