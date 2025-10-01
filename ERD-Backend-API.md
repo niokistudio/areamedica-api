@@ -55,7 +55,6 @@ src/
 
 - **Transaction Management Service**: Handle banking transactions
 - **Banking Gateway**: Banesco API integration
-- **PDF Generation Service**: Document creation
 - **Authentication Service**: User management and permissions
 - **Rate Limiting Service**: API rate control
 - **Audit Service**: Transaction event logging
@@ -92,10 +91,6 @@ python-multipart>=0.0.6
 # HTTP Client & Banking Integration
 httpx>=0.25.0
 tenacity>=8.2.0
-
-# PDF Generation
-weasyprint>=60.0
-jinja2>=3.1.0
 
 # Monitoring & Logging
 prometheus-client>=0.19.0
@@ -158,12 +153,10 @@ areamedica-api/
 │   │   ├── use_cases/
 │   │   │   ├── __init__.py
 │   │   │   ├── create_transaction.py
-│   │   │   ├── get_transaction_status.py
-│   │   │   └── generate_pdf.py
+│   │   │   └── get_transaction_status.py
 │   │   └── services/
 │   │       ├── __init__.py
-│   │       ├── transaction_service.py
-│   │       └── pdf_service.py
+│   │       └── transaction_service.py
 │   ├── infrastructure/
 │   │   ├── database/
 │   │   │   ├── __init__.py
@@ -172,8 +165,7 @@ areamedica-api/
 │   │   │   └── repositories/
 │   │   ├── external/
 │   │   │   ├── __init__.py
-│   │   │   ├── banesco_client.py
-│   │   │   └── pdf_generator.py
+│   │   │   └── banesco_client.py
 │   │   ├── cache/
 │   │   │   ├── __init__.py
 │   │   │   └── redis_cache.py
@@ -292,17 +284,6 @@ CREATE TABLE transaction_events (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- PDF Artifacts
-CREATE TABLE pdf_artifacts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    transaction_id UUID REFERENCES transactions(id) ON DELETE CASCADE,
-    file_path VARCHAR(500) NOT NULL,
-    file_size INTEGER,
-    checksum VARCHAR(64),
-    mime_type VARCHAR(100) DEFAULT 'application/pdf',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
 -- Rate Limiting
 CREATE TABLE rate_limits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -398,15 +379,6 @@ async def get_transaction_status(
     transaction_service: TransactionService = Depends()
 ):
     """Get current transaction status with Banesco sync if needed."""
-    pass
-
-@router.get("/{transaction_id}/pdf")
-async def download_transaction_pdf(
-    transaction_id: str,
-    current_user: User = Depends(get_current_user),
-    pdf_service: PDFService = Depends()
-):
-    """Download transaction PDF receipt."""
     pass
 
 @router.get("/", response_model=TransactionListResponse)
@@ -538,7 +510,6 @@ class PermissionType(str, Enum):
     TRANSACTION_READ = "transaction:read"
     TRANSACTION_UPDATE = "transaction:update"
     TRANSACTION_DELETE = "transaction:delete"
-    PDF_DOWNLOAD = "pdf:download"
     ADMIN_ACCESS = "admin:access"
 
 @dataclass
@@ -1129,12 +1100,6 @@ BANESCO_API_CALLS = Counter(
     ['status', 'operation']
 )
 
-PDF_GENERATION_COUNT = Counter(
-    'pdf_generation_total',
-    'Total PDF documents generated',
-    ['status']
-)
-
 ACTIVE_USERS = Gauge(
     'active_users',
     'Number of active users'
@@ -1715,10 +1680,6 @@ BANESCO_API_KEY=your-banesco-api-key
 BANESCO_TIMEOUT=30
 BANESCO_RATE_LIMIT=2
 
-# PDF Generation
-PDF_STORAGE_PATH=/app/storage/pdfs
-PDF_TEMPLATE_PATH=/app/templates
-
 # Monitoring
 PROMETHEUS_PORT=9090
 LOG_LEVEL=INFO
@@ -1771,10 +1732,6 @@ class Settings(BaseSettings):
     banesco_api_key: str
     banesco_timeout: int = 30
     banesco_rate_limit: int = 2
-    
-    # PDF
-    pdf_storage_path: str = "/app/storage/pdfs"
-    pdf_template_path: str = "/app/templates"
     
     # Monitoring
     log_level: str = "INFO"
@@ -1845,7 +1802,6 @@ Based on the analysis of the PRD and sequence diagram, here are additional aspec
 - Core transaction management
 - Basic authentication
 - Banesco integration
-- PDF generation
 - Basic monitoring
 
 **Phase 2 (Post-MVP)**
