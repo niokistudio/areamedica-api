@@ -1,0 +1,267 @@
+{
+    "dashboard": {
+        "title": "Área Médica API - Production Dashboard",
+        "timezone": "browser",
+        "schemaVersion": 16,
+        "version": 0,
+        "refresh": "30s",
+        "panels": [
+            {
+                "id": 1,
+                "title": "Request Rate",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(http_requests_total[5m])",
+                        "legendFormat": "{{method}} {{endpoint}} - {{status_code}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 2,
+                "title": "Response Time (95th percentile)",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+                        "legendFormat": "{{method}} {{endpoint}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 12,
+                    "y": 0,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 3,
+                "title": "Transaction Status Distribution",
+                "type": "piechart",
+                "targets": [
+                    {
+                        "expr": "transactions_total",
+                        "legendFormat": "{{status}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 8,
+                    "w": 8,
+                    "h": 8
+                }
+            },
+            {
+                "id": 4,
+                "title": "Transactions by Bank",
+                "type": "piechart",
+                "targets": [
+                    {
+                        "expr": "sum by (bank) (transactions_total)",
+                        "legendFormat": "{{bank}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 8,
+                    "y": 8,
+                    "w": 8,
+                    "h": 8
+                }
+            },
+            {
+                "id": 5,
+                "title": "Transactions In Progress",
+                "type": "stat",
+                "targets": [
+                    {
+                        "expr": "transactions_in_progress"
+                    }
+                ],
+                "gridPos": {
+                    "x": 16,
+                    "y": 8,
+                    "w": 8,
+                    "h": 8
+                }
+            },
+            {
+                "id": 6,
+                "title": "Banesco API Call Rate",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(banesco_api_calls_total[5m])",
+                        "legendFormat": "{{operation}} - {{status}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 16,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 7,
+                "title": "Banesco API Response Time",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, rate(banesco_api_duration_seconds_bucket[5m]))",
+                        "legendFormat": "{{operation}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 12,
+                    "y": 16,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 8,
+                "title": "Banesco API Errors",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(banesco_api_errors_total[5m])",
+                        "legendFormat": "{{error_type}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 24,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 9,
+                "title": "Banesco Rate Limit Violations",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(banesco_rate_limit_exceeded_total[5m])",
+                        "legendFormat": "{{transaction_id}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 12,
+                    "y": 24,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 10,
+                "title": "Authentication Success Rate",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(auth_attempts_total{result=\"success\"}[5m]) / rate(auth_attempts_total[5m])",
+                        "legendFormat": "Success Rate"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 32,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 11,
+                "title": "Active Sessions",
+                "type": "stat",
+                "targets": [
+                    {
+                        "expr": "active_sessions"
+                    }
+                ],
+                "gridPos": {
+                    "x": 12,
+                    "y": 32,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 12,
+                "title": "Database Query Duration",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m]))",
+                        "legendFormat": "{{operation}} on {{table}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 40,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 13,
+                "title": "Database Connection Pool",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "db_connection_pool_size",
+                        "legendFormat": "Pool Size"
+                    },
+                    {
+                        "expr": "db_connection_pool_available",
+                        "legendFormat": "Available"
+                    }
+                ],
+                "gridPos": {
+                    "x": 12,
+                    "y": 40,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 14,
+                "title": "Cache Hit Ratio",
+                "type": "gauge",
+                "targets": [
+                    {
+                        "expr": "cache_hit_ratio"
+                    }
+                ],
+                "gridPos": {
+                    "x": 0,
+                    "y": 48,
+                    "w": 12,
+                    "h": 8
+                }
+            },
+            {
+                "id": 15,
+                "title": "Cache Operations",
+                "type": "graph",
+                "targets": [
+                    {
+                        "expr": "rate(cache_operations_total[5m])",
+                        "legendFormat": "{{operation}} - {{result}}"
+                    }
+                ],
+                "gridPos": {
+                    "x": 12,
+                    "y": 48,
+                    "w": 12,
+                    "h": 8
+                }
+            }
+        ]
+    }
+}

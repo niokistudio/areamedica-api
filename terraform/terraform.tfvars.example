@@ -1,0 +1,76 @@
+# AreaMédica API - Terraform Environment: Production
+# Version: 1.0.0
+
+# DigitalOcean Token (set via environment variable)
+# export TF_VAR_do_token="your_digitalocean_token"
+
+# General Configuration
+project_name = "areamedica-api"
+environment  = "production"
+region       = "nyc3"
+
+tags = [
+  "areamedica",
+  "api",
+  "production",
+  "backend",
+  "medical"
+]
+
+# Network Configuration
+vpc_ip_range = "10.20.0.0/16"
+
+# Database Configuration
+db_size       = "db-s-2vcpu-4gb"  # 2 vCPU, 4 GB RAM, 38 GB disk
+db_node_count = 2                  # Primary + Standby for high availability
+db_name       = "areamedica"
+db_user       = "areamedica_app"
+
+# Redis Configuration
+redis_size = "db-s-1vcpu-2gb"  # 1 vCPU, 2 GB RAM
+
+# Compute Configuration
+droplet_size      = "s-2vcpu-4gb"  # 2 vCPU, 4 GB RAM, 80 GB SSD
+app_server_count  = 3               # 3 servers for load balancing
+docker_compose_version = "2.23.0"
+
+# SSH Configuration
+# Add your SSH key fingerprints here
+ssh_keys = [
+  # "your-ssh-key-fingerprint-1",
+  # "your-ssh-key-fingerprint-2"
+]
+
+ssh_allowed_ips = [
+  # "your-office-ip/32",
+  # "your-home-ip/32"
+]
+
+# SSL & Domains
+domains = [
+  "api.areamedica.com"
+]
+
+# DNS Configuration
+create_domain  = true
+primary_domain = "areamedica.com"
+
+# Monitoring
+enable_monitoring        = true
+monitoring_droplet_size  = "s-2vcpu-2gb"
+monitoring_allowed_ips   = [
+  # "your-office-ip/32"
+]
+
+# Storage
+spaces_region = "nyc3"
+
+# Kubernetes (disabled for initial deployment)
+enable_kubernetes = false
+
+# When enabled, use these values:
+# k8s_version    = "1.28.2-do.0"
+# k8s_node_size  = "s-2vcpu-4gb"
+# k8s_node_count = 3
+# k8s_min_nodes  = 2
+# k8s_max_nodes  = 6
