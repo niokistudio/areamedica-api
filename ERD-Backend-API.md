@@ -135,6 +135,52 @@ pytest-cov==4.1.0
 ruff==0.1.6  # Linting and formatting
 ```
 
+### 2.4 Preguntas a Banesco sobre la Integración
+
+A continuación se documentan las preguntas realizadas al equipo de Banesco y sus respuestas oficiales:
+
+**1. ¿Cuál es la documentación oficial de la API de Banesco donde haremos la integración con nuestro sistema?**
+
+*Respuesta:* La documentación técnica para el desarrollo es compartida junto a las credenciales, data de prueba y URL, para ello es necesario contar con las planillas debidamente llenadas para tramitar las credenciales en ambiente de calidad con las áreas encargadas.
+
+**2. ¿Tienen un entorno sandbox para poder hacer todas las pruebas que necesitamos, de ser así, cuál es la URL de acceso?**
+
+*Respuesta:* Sí contamos con un ambiente de prueba, se hace entrega de las credenciales en ambiente de calidad, data de prueba y URL. Una vez que finalicen la implementación y sus pruebas unitarias nos notifican y se realiza una prueba en conjunto con el equipo TI Banesco y Equipo TI del cliente, para validar el correcto funcionamiento del API. De ser exitosas se tramitan las credenciales en ambiente de Productivo y se realiza una prueba en conjunto con el equipo TI Banesco y Equipo TI del cliente. De ser exitosas, el cliente indica la fecha de la masificación.
+
+**3. ¿Cuáles son los métodos de autenticación que soporta la API (OAuth, API Key, etc)?**
+
+*Respuesta:* Todas nuestras APIs usan método: **OAuth 2.0**
+
+**4. ¿El campo de concepto es obligatorio?**
+
+*Respuesta:* El campo concepto no es obligatorio, eso es un campo que trae la transacción a consultar donde el mismo puede indicar alguna descripción del movimiento, ejemplo pago móvil, transferencia.
+
+**5. ¿El campo de referencia es único e identificable?**
+
+*Respuesta:* Sí, la referencia es única por tipo de transacción. Por ejemplo, pago móvil. Hay escenarios donde 2 transacciones tienen la misma referencia, pero una es la transacción y la otra la comisión asociada a esa transacción.
+
+**6. ¿Qué pasos se deben pasar para que una vez terminado el desarrollo, nos den el visto bueno (auditorías de seguridad, tiempo estimado, estándares de calidad, etc)? ¿Cuánto tiempo se estima para cada uno de estos pasos y poder tener nuestro sistema productivo?**
+
+*Respuesta:* Una vez entregadas las credenciales ambiente de calidad, data de prueba y URL, el tiempo depende del cliente. Al notificar que ya realizaron la implementación y culminaron sus pruebas unitarias se comparte disponibilidad para agendar sesión de pruebas en conjunto con el equipo TI Banesco y Equipo TI del cliente.
+
+**7. ¿Debemos presentar alguna documentación adicional para la integración?**
+
+*Respuesta:* Solo las planillas debidamente llenadas.
+
+**8. ¿Se debe pagar alguna tarifa por la integración?**
+
+*Respuesta:* No, porque el desarrollo lo realiza el cliente.
+
+#### Implicaciones para el Desarrollo
+
+Basándose en estas respuestas, se han identificado los siguientes requisitos:
+
+1. **OAuth 2.0**: Implementar flujo de autenticación OAuth 2.0 para Banesco (ver sección 7.1)
+2. **Campo concepto opcional**: Ya contemplado en el schema de base de datos
+3. **Referencia no completamente única**: Se agrega campo `transaction_type` para diferenciar transacción principal de comisión (ver sección 4.1)
+4. **Proceso de certificación**: Documentado en sección 7.3
+5. **Ambientes QA y Producción**: Configuración de múltiples ambientes (ver sección 16.1)
+
 ---
 
 ## 3. Project Structure ✅ 100%
@@ -284,11 +330,18 @@ CREATE TYPE bank_type AS ENUM (
     'MOBILE_TRANSFER'
 );
 
+CREATE TYPE transaction_type AS ENUM (
+    'TRANSACTION',
+    'COMMISSION',
+    'OTHER'
+);
+
 CREATE TABLE transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     transaction_id VARCHAR(100) UNIQUE NOT NULL,
     status transaction_status NOT NULL DEFAULT 'IN_PROGRESS',
     bank bank_type NOT NULL,
+    transaction_type transaction_type NOT NULL DEFAULT 'TRANSACTION',
     reference VARCHAR(20) NOT NULL,
     customer_full_name VARCHAR(255) NOT NULL,
     customer_phone VARCHAR(11) NOT NULL,
@@ -299,7 +352,8 @@ CREATE TABLE transactions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-    created_by UUID REFERENCES users(id)
+    created_by UUID REFERENCES users(id),
+    CONSTRAINT unique_reference_per_type UNIQUE(reference, transaction_type)
 );
 
 -- Transaction Events (Audit Trail)
@@ -441,6 +495,11 @@ class BankType(str, Enum):
     BANESCO = "BANESCO"
     MOBILE_TRANSFER = "MOBILE_TRANSFER"
 
+class TransactionType(str, Enum):
+    TRANSACTION = "TRANSACTION"
+    COMMISSION = "COMMISSION"
+    OTHER = "OTHER"
+
 class TransactionStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
@@ -465,12 +524,14 @@ class CreateTransactionRequest(BaseModel):
     customer: CustomerData
     reference: str = Field(..., regex=r'^\d{9}$')
     bank: BankType
+    transaction_type: TransactionType = TransactionType.TRANSACTION
 
 class TransactionResponse(BaseModel):
     id: str
     transaction_id: str
     status: TransactionStatus
     bank: BankType
+    transaction_type: TransactionType
     reference: str
     customer: CustomerData
     created_at: datetime
@@ -565,7 +626,9 @@ class User:
 
 ## 7. Banking Integration (Banesco) ⏳ 0%
 
-### 7.1 Banesco Client
+### 7.1 Banesco Client con OAuth 2.0
+
+Según la documentación oficial de Banesco (ver sección 2.4), todas las APIs utilizan **OAuth 2.0** como método de autenticación.
 
 ```python
 # src/infrastructure/external/banesco_client.py
@@ -573,18 +636,57 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import Optional, Dict, Any
 import structlog
+from datetime import datetime, timedelta
 
 logger = structlog.get_logger()
 
+class BanescoOAuth2Client:
+    """Cliente OAuth 2.0 para autenticación con Banesco."""
+    
+    def __init__(self, auth_url: str, client_id: str, client_secret: str):
+        self.auth_url = auth_url
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.access_token: Optional[str] = None
+        self.token_expires_at: Optional[datetime] = None
+    
+    async def get_access_token(self) -> str:
+        """Obtener access token usando OAuth 2.0 Client Credentials flow."""
+        if self.access_token and self.token_expires_at:
+            if datetime.utcnow() < self.token_expires_at:
+                return self.access_token
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self.auth_url,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret
+                }
+            )
+            response.raise_for_status()
+            token_data = response.json()
+            
+            self.access_token = token_data["access_token"]
+            expires_in = token_data.get("expires_in", 3600)
+            self.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in - 60)
+            
+            return self.access_token
+
 class BanescoClient:
-    def __init__(self, base_url: str, api_key: str, timeout: int = 30):
+    def __init__(self, base_url: str, oauth_client: BanescoOAuth2Client, timeout: int = 30):
         self.base_url = base_url
-        self.api_key = api_key
+        self.oauth_client = oauth_client
         self.timeout = timeout
         self.client = httpx.AsyncClient(
-            timeout=httpx.Timeout(timeout),
-            headers={"Authorization": f"Bearer {api_key}"}
+            timeout=httpx.Timeout(timeout)
         )
+    
+    async def _get_headers(self) -> Dict[str, str]:
+        """Obtener headers con token OAuth 2.0."""
+        access_token = await self.oauth_client.get_access_token()
+        return {"Authorization": f"Bearer {access_token}"}
 
     @retry(
         stop=stop_after_attempt(3),
@@ -596,8 +698,10 @@ class BanescoClient:
     ) -> Optional[Dict[str, Any]]:
         """Get transaction status from Banesco API."""
         try:
+            headers = await self._get_headers()
             response = await self.client.get(
-                f"{self.base_url}/transactions/{transaction_id}"
+                f"{self.base_url}/transactions/{transaction_id}",
+                headers=headers
             )
             
             if response.status_code == 200:
@@ -687,6 +791,87 @@ class RateLimitService:
             resource_type, resource_id, window_start
         )
 ```
+
+### 7.3 Proceso de Certificación con Banesco
+
+Según la información proporcionada por Banesco (ver sección 2.4), el proceso de certificación sigue estas fases:
+
+#### Fase 1: Solicitud de Credenciales QA
+
+1. **Documentación requerida**: Planillas de Banesco debidamente llenadas
+2. **Entrega de credenciales**: Banesco proporciona:
+   - Credenciales OAuth 2.0 para ambiente de calidad (QA)
+   - URL del API de QA
+   - Documentación técnica de la API
+   - Data de prueba para validación
+
+#### Fase 2: Desarrollo e Implementación
+
+1. **Desarrollo**: El cliente (nosotros) implementa la integración usando:
+   - Credenciales de QA
+   - Documentación técnica
+   - Data de prueba proporcionada
+2. **Pruebas unitarias**: Ejecutar suite completa de tests
+3. **Pruebas de integración**: Validar contra ambiente QA de Banesco
+
+#### Fase 3: Certificación en Ambiente QA
+
+1. **Notificación a Banesco**: Una vez completadas nuestras pruebas
+2. **Coordinación de sesión**: Agendar pruebas conjuntas con equipo TI Banesco
+3. **Pruebas en conjunto**: 
+   - Validación del correcto funcionamiento del API
+   - Verificación de casos de uso completos
+   - Revisión de manejo de errores
+4. **Aprobación QA**: Si las pruebas son exitosas, se procede a Fase 4
+
+#### Fase 4: Despliegue a Producción
+
+1. **Solicitud de credenciales productivas**: Tramitación de credenciales de producción
+2. **Entrega de credenciales**: Banesco proporciona:
+   - Credenciales OAuth 2.0 para producción
+   - URL del API de producción
+3. **Pruebas en producción**: Segunda sesión de pruebas conjuntas en ambiente productivo
+4. **Aprobación final**: Si las pruebas son exitosas, el cliente indica fecha de masificación
+
+#### Fase 5: Masificación
+
+1. **Planificación**: Cliente define fecha de go-live
+2. **Monitoreo**: Supervisión intensiva durante las primeras semanas
+3. **Soporte**: Coordinación con Banesco para cualquier incidencia
+
+#### Consideraciones Importantes
+
+- **No hay costo**: La integración es gratuita ya que el desarrollo lo realiza el cliente
+- **Tiempo variable**: El timeline depende completamente del ritmo de desarrollo del cliente
+- **Documentación mínima**: Solo se requieren las planillas de Banesco
+- **Dos ambientes**: QA y Producción, ambos con credenciales OAuth 2.0 separadas
+- **Pruebas obligatorias**: Las sesiones de pruebas conjuntas son requisito para avanzar
+
+#### Checklist de Certificación
+
+**Antes de solicitar credenciales QA:**
+- [ ] Planillas de Banesco completadas
+- [ ] Arquitectura de integración definida
+- [ ] Equipo de desarrollo asignado
+
+**Antes de pruebas conjuntas QA:**
+- [ ] Implementación completa
+- [ ] Pruebas unitarias pasando (85%+ coverage)
+- [ ] Pruebas de integración con datos de prueba exitosas
+- [ ] Documentación de casos de prueba preparada
+- [ ] Logs y monitoreo configurados
+
+**Antes de solicitar credenciales Producción:**
+- [ ] Aprobación de pruebas QA por Banesco
+- [ ] Revisión de seguridad completada
+- [ ] Plan de rollback definido
+- [ ] Equipo de soporte preparado
+
+**Antes de masificación:**
+- [ ] Aprobación de pruebas en producción
+- [ ] Monitoreo y alertas configurados
+- [ ] Plan de comunicación a usuarios
+- [ ] Procedimientos de escalación definidos
 
 ---
 
@@ -1701,8 +1886,16 @@ ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 # Banesco Integration
-BANESCO_API_URL=https://api.banesco.com/v1
-BANESCO_API_KEY=your-banesco-api-key
+# OAuth 2.0 Configuration
+BANESCO_ENVIRONMENT=qa  # qa or production
+BANESCO_QA_API_URL=https://qa-api.banesco.com/v1
+BANESCO_QA_AUTH_URL=https://qa-oauth.banesco.com/token
+BANESCO_QA_CLIENT_ID=your-qa-client-id
+BANESCO_QA_CLIENT_SECRET=your-qa-client-secret
+BANESCO_PROD_API_URL=https://api.banesco.com/v1
+BANESCO_PROD_AUTH_URL=https://oauth.banesco.com/token
+BANESCO_PROD_CLIENT_ID=your-prod-client-id
+BANESCO_PROD_CLIENT_SECRET=your-prod-client-secret
 BANESCO_TIMEOUT=30
 BANESCO_RATE_LIMIT=2
 
@@ -1753,11 +1946,34 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
-    # Banesco
-    banesco_api_url: str
-    banesco_api_key: str
+    # Banesco OAuth 2.0
+    banesco_environment: str = "qa"  # qa or production
+    banesco_qa_api_url: str
+    banesco_qa_auth_url: str
+    banesco_qa_client_id: str
+    banesco_qa_client_secret: str
+    banesco_prod_api_url: str
+    banesco_prod_auth_url: str
+    banesco_prod_client_id: str
+    banesco_prod_client_secret: str
     banesco_timeout: int = 30
     banesco_rate_limit: int = 2
+    
+    @property
+    def banesco_api_url(self) -> str:
+        return self.banesco_qa_api_url if self.banesco_environment == "qa" else self.banesco_prod_api_url
+    
+    @property
+    def banesco_auth_url(self) -> str:
+        return self.banesco_qa_auth_url if self.banesco_environment == "qa" else self.banesco_prod_auth_url
+    
+    @property
+    def banesco_client_id(self) -> str:
+        return self.banesco_qa_client_id if self.banesco_environment == "qa" else self.banesco_prod_client_id
+    
+    @property
+    def banesco_client_secret(self) -> str:
+        return self.banesco_qa_client_secret if self.banesco_environment == "qa" else self.banesco_prod_client_secret
     
     # Monitoring
     log_level: str = "INFO"
