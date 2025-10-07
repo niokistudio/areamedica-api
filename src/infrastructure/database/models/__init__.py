@@ -1,6 +1,29 @@
-"""Database models base and common configurations."""
+"""Database models."""
 
-from sqlalchemy.ext.declarative import declarative_base
+from .base import Base, SoftDeleteMixin, TimestampMixin
+from .rate_limit import RateLimitModel
+from .transaction import (
+    ActorTypeEnum,
+    BankTypeEnum,
+    TransactionEventModel,
+    TransactionModel,
+    TransactionStatusEnum,
+    TransactionTypeEnum,
+)
+from .user import PermissionModel, UserModel, UserPermissionModel
 
-# Create the base class for all models
-Base = declarative_base()
+__all__ = [
+    "Base",
+    "TimestampMixin",
+    "SoftDeleteMixin",
+    "UserModel",
+    "PermissionModel",
+    "UserPermissionModel",
+    "TransactionModel",
+    "TransactionEventModel",
+    "TransactionStatusEnum",
+    "BankTypeEnum",
+    "TransactionTypeEnum",
+    "ActorTypeEnum",
+    "RateLimitModel",
+]
