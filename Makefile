@@ -28,12 +28,12 @@ test-cov:
 
 lint:
 	ruff check src/ tests/
-	black --check src/ tests/
+	ruff format --check src/ tests/
 	mypy src/
 
 format:
-	ruff --fix src/ tests/
-	black src/ tests/
+	ruff check --fix src/ tests/
+	ruff format src/ tests/
 
 clean:
 	find . -type f -name "*.pyc" -delete

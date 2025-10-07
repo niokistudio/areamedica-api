@@ -40,10 +40,11 @@ ignore = [
 known-first-party = ["src"]
 split-on-trailing-comma = true
 
-[tool.black]
-target-version = ['py311']
-line-length = 88
-skip-string-normalization = true
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
 
 [tool.mypy]
 python_version = "3.11"

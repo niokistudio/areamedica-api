@@ -192,8 +192,7 @@ Make sure to set these in production:
 
 This project enforces high code quality standards:
 
-- **Linting**: Ruff
-- **Formatting**: Black
+- **Linting & Formatting**: Ruff (replaces both Flake8 and Black)
 - **Type checking**: MyPy
 - **Testing**: pytest with 85% coverage requirement
 - **Pre-commit hooks**: Automated quality checks
