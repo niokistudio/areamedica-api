@@ -68,7 +68,11 @@ async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create test client."""
-    async with AsyncClient(app=app, base_url="http://testserver") as ac:
+    from httpx import ASGITransport
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as ac:
         yield ac
 
 

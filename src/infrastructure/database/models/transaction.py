@@ -68,7 +68,7 @@ class TransactionModel(Base, TimestampMixin, SoftDeleteMixin):
     customer_national_id: Mapped[str] = mapped_column(String(10), nullable=False)
     concept: Mapped[str | None] = mapped_column(String, nullable=True)
     banesco_payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    extra_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     created_by: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id"), nullable=True
     )
@@ -111,7 +111,7 @@ class TransactionEventModel(Base, TimestampMixin):
     reason: Mapped[str | None] = mapped_column(String, nullable=True)
     actor_type: Mapped[str] = mapped_column(String(20), nullable=False, default="USER")
     actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    event_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 
     # Relationships
     transaction = relationship(

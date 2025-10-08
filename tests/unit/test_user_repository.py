@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from domain.entities.permission import Permission
 from domain.entities.user import User
 from infrastructure.database.repositories.user_repository import (
-    SQLAlchemyUserRepository,
+    UserRepository,
 )
 
 
@@ -17,11 +17,11 @@ class TestUserRepository:
     """Test suite for UserRepository."""
 
     @pytest.fixture
-    def repository(self, db_session: AsyncSession) -> SQLAlchemyUserRepository:
+    def repository(self, db_session: AsyncSession) -> UserRepository:
         """Create repository instance."""
-        return SQLAlchemyUserRepository(db_session)
+        return UserRepository(db_session)
 
-    async def test_create_user(self, repository: SQLAlchemyUserRepository) -> None:
+    async def test_create_user(self, repository: UserRepository) -> None:
         """Test user creation."""
         user = User(
             id=uuid4(),
@@ -39,9 +39,7 @@ class TestUserRepository:
         assert created_user.email == user.email
         assert created_user.full_name == user.full_name
 
-    async def test_get_by_id(
-        self, repository: SQLAlchemyUserRepository, test_user: dict
-    ) -> None:
+    async def test_get_by_id(self, repository: UserRepository, test_user: dict) -> None:
         """Test getting user by ID."""
         user = await repository.get_by_id(test_user["id"])
 
@@ -50,7 +48,7 @@ class TestUserRepository:
         assert user.full_name == test_user["full_name"]
 
     async def test_get_by_email(
-        self, repository: SQLAlchemyUserRepository, test_user: dict
+        self, repository: UserRepository, test_user: dict
     ) -> None:
         """Test getting user by email."""
         user = await repository.get_by_email(test_user["email"])
@@ -59,16 +57,14 @@ class TestUserRepository:
         assert user.id == test_user["id"]
         assert user.full_name == test_user["full_name"]
 
-    async def test_get_nonexistent_user(
-        self, repository: SQLAlchemyUserRepository
-    ) -> None:
+    async def test_get_nonexistent_user(self, repository: UserRepository) -> None:
         """Test getting user that doesn't exist."""
         user = await repository.get_by_id(uuid4())
 
         assert user is None
 
     async def test_update_user(
-        self, repository: SQLAlchemyUserRepository, test_user: dict
+        self, repository: UserRepository, test_user: dict
     ) -> None:
         """Test updating user."""
         user = await repository.get_by_id(test_user["id"])
@@ -81,7 +77,7 @@ class TestUserRepository:
         assert updated_user.email == test_user["email"]
 
     async def test_delete_user(
-        self, repository: SQLAlchemyUserRepository, test_user: dict
+        self, repository: UserRepository, test_user: dict
     ) -> None:
         """Test user deletion."""
         await repository.delete(test_user["id"])
@@ -89,7 +85,7 @@ class TestUserRepository:
         deleted_user = await repository.get_by_id(test_user["id"])
         assert deleted_user is None
 
-    async def test_list_users(self, repository: SQLAlchemyUserRepository) -> None:
+    async def test_list_users(self, repository: UserRepository) -> None:
         """Test listing users."""
         users = await repository.list(limit=10, offset=0)
 
@@ -97,7 +93,7 @@ class TestUserRepository:
         assert len(users) >= 0
 
     async def test_add_permission_to_user(
-        self, repository: SQLAlchemyUserRepository, test_user: dict
+        self, repository: UserRepository, test_user: dict
     ) -> None:
         """Test adding permission to user."""
         permission = Permission(

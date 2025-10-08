@@ -27,9 +27,7 @@ class TestTransactionService:
     @pytest.fixture
     def service(self, mock_repo: Mock, mock_banesco_client: Mock) -> TransactionService:
         """Create TransactionService instance."""
-        return TransactionService(
-            repository=mock_repo, banesco_client=mock_banesco_client
-        )
+        return TransactionService(transaction_repo=mock_repo)
 
     @pytest.mark.asyncio
     async def test_create_transaction(
@@ -44,7 +42,7 @@ class TestTransactionService:
                 amount=Decimal("100.50"),
                 reference="REF123",
                 bank=BankType.BANESCO,
-                status=TransactionStatus.PENDING,
+                status=TransactionStatus.IN_PROGRESS,
                 transaction_type="TRANSACTION",
                 created_at=datetime.utcnow(),
             )
@@ -59,7 +57,7 @@ class TestTransactionService:
 
         assert transaction.user_id == user_id
         assert transaction.amount == Decimal("100.50")
-        assert transaction.status == TransactionStatus.PENDING
+        assert transaction.status == TransactionStatus.IN_PROGRESS
         mock_repo.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -74,7 +72,7 @@ class TestTransactionService:
             amount=Decimal("100.00"),
             reference="REF123",
             bank=BankType.BANESCO,
-            status=TransactionStatus.PENDING,
+            status=TransactionStatus.IN_PROGRESS,
             transaction_type="TRANSACTION",
             created_at=datetime.utcnow(),
         )
@@ -114,7 +112,7 @@ class TestTransactionService:
                 amount=Decimal("50.00"),
                 reference=f"REF{i}",
                 bank=BankType.BANESCO,
-                status=TransactionStatus.APPROVED,
+                status=TransactionStatus.COMPLETED,
                 transaction_type="TRANSACTION",
                 created_at=datetime.utcnow(),
             )
@@ -125,7 +123,7 @@ class TestTransactionService:
 
         transactions = await service.list_transactions(
             user_id=user_id,
-            status=TransactionStatus.APPROVED,
+            status=TransactionStatus.COMPLETED,
             limit=10,
             offset=0,
         )
@@ -133,7 +131,7 @@ class TestTransactionService:
         assert len(transactions) == 3
         mock_repo.list_by_user.assert_called_once_with(
             user_id=user_id,
-            status=TransactionStatus.APPROVED,
+            status=TransactionStatus.COMPLETED,
             limit=10,
             offset=0,
         )
