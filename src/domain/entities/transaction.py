@@ -46,7 +46,7 @@ class Transaction:
     customer_national_id: str
     concept: str | None = None
     banesco_payload: dict | None = None
-    metadata: dict = field(default_factory=dict)
+    extra_data: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
     deleted_at: datetime | None = None

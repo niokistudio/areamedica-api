@@ -78,6 +78,12 @@ class TransactionService:
         """Get transaction by transaction_id."""
         return await self.transaction_repo.get_by_transaction_id(transaction_id)
 
+    async def get_transaction_by_reference(
+        self, reference: str
+    ) -> Transaction | None:
+        """Get transaction by reference number."""
+        return await self.transaction_repo.get_by_reference(reference)
+
     async def update_transaction_status(
         self,
         transaction_id: UUID,
@@ -103,31 +109,31 @@ class TransactionService:
     async def list_transactions(
         self,
         status: TransactionStatus | None = None,
+        bank: BankType | None = None,
+        transaction_type: TransactionType | None = None,
         reference: str | None = None,
         phone: str | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        page: int = 1,
-        size: int = 20,
-    ) -> tuple[list[Transaction], int, int]:
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Transaction], int]:
         """List transactions with filters and pagination.
 
         Returns:
-            Tuple of (transactions, total_count, total_pages)
+            Tuple of (transactions, total_count)
         """
-        skip = (page - 1) * size
         transactions, total = await self.transaction_repo.list_with_filters(
             status=status,
             reference=reference,
             phone=phone,
             from_date=from_date,
             to_date=to_date,
-            skip=skip,
-            limit=size,
+            skip=offset,
+            limit=limit,
         )
 
-        total_pages = (total + size - 1) // size  # Ceiling division
-        return transactions, total, total_pages
+        return transactions, total
 
     async def delete_transaction(self, transaction_id: UUID) -> bool:
         """Soft delete a transaction."""

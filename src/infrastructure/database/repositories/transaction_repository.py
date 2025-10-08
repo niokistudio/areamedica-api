@@ -42,7 +42,7 @@ class TransactionRepository(ITransactionRepository):
             customer_national_id=model.customer_national_id,
             concept=model.concept,
             banesco_payload=model.banesco_payload,
-            metadata=model.metadata,
+            extra_data=model.extra_data,
             created_at=model.created_at,
             updated_at=model.updated_at,
             deleted_at=model.deleted_at,
@@ -63,7 +63,7 @@ class TransactionRepository(ITransactionRepository):
             customer_national_id=entity.customer_national_id,
             concept=entity.concept,
             banesco_payload=entity.banesco_payload,
-            metadata=entity.metadata,
+            extra_data=entity.extra_data,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
             deleted_at=entity.deleted_at,
@@ -83,6 +83,16 @@ class TransactionRepository(ITransactionRepository):
         """Get transaction by transaction_id."""
         stmt = select(TransactionModel).where(
             TransactionModel.transaction_id == transaction_id,
+            TransactionModel.deleted_at.is_(None),
+        )
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
+    async def get_by_reference(self, reference: str) -> Transaction | None:
+        """Get transaction by reference number."""
+        stmt = select(TransactionModel).where(
+            TransactionModel.reference == reference,
             TransactionModel.deleted_at.is_(None),
         )
         result = await self.session.execute(stmt)
@@ -115,7 +125,7 @@ class TransactionRepository(ITransactionRepository):
         model.customer_national_id = transaction.customer_national_id
         model.concept = transaction.concept
         model.banesco_payload = transaction.banesco_payload
-        model.metadata = transaction.metadata
+        model.extra_data = transaction.extra_data
 
         await self.session.flush()
         await self.session.refresh(model)

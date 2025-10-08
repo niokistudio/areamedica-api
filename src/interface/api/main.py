@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from infrastructure.config.settings import settings
-from interface.api.routes import health
+from interface.api.routes import auth, health, transactions
 
 
 # Configure logging
@@ -49,6 +49,8 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router, tags=["Health"])
+app.include_router(auth.router, tags=["Authentication"])
+app.include_router(transactions.router, tags=["Transactions"])
 
 
 # Root endpoint
