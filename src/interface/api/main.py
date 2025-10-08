@@ -50,7 +50,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router, tags=["Health"])
 app.include_router(auth.router, tags=["Authentication"])
-app.include_router(transactions.router, tags=["Transactions"])
+app.include_router(transactions.router)  # Router already has tags defined
 
 
 # Root endpoint

@@ -19,7 +19,7 @@ from infrastructure.database.repositories.transaction_repository import (
 )
 from interface.api.routes.auth import get_current_user
 
-router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
+router = APIRouter(prefix="/api/v1/transactions", tags=["Transactions"])
 
 
 def get_transaction_service(
