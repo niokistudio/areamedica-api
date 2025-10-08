@@ -78,9 +78,7 @@ class TransactionService:
         """Get transaction by transaction_id."""
         return await self.transaction_repo.get_by_transaction_id(transaction_id)
 
-    async def get_transaction_by_reference(
-        self, reference: str
-    ) -> Transaction | None:
+    async def get_transaction_by_reference(self, reference: str) -> Transaction | None:
         """Get transaction by reference number."""
         return await self.transaction_repo.get_by_reference(reference)
 

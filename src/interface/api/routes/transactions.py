@@ -1,74 +1,23 @@
 """Transaction API routes."""
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from application.dto.transaction_dto import (
+    CreateTransactionRequest,
+    TransactionListResponse,
+    TransactionResponse,
+)
+from application.services.transaction_service import TransactionService
 from domain.entities.transaction import BankType, TransactionStatus, TransactionType
+from domain.entities.user import User
 from infrastructure.database.connection import get_db_session
 from infrastructure.database.repositories.transaction_repository import (
     TransactionRepository,
 )
-from application.services.transaction_service import TransactionService
 from interface.api.routes.auth import get_current_user
-from domain.entities.user import User
-from pydantic import BaseModel, Field
-
-
-# ==================== DTOs ====================
-
-
-class CreateTransactionRequest(BaseModel):
-    """Request model for creating a transaction."""
-
-    transaction_id: str = Field(..., description="Unique transaction identifier")
-    reference: str = Field(..., description="Transaction reference number")
-    bank: BankType = Field(..., description="Bank type")
-    transaction_type: TransactionType = Field(..., description="Transaction type")
-    customer_full_name: str = Field(..., description="Customer full name")
-    customer_phone: str = Field(..., description="Customer phone number")
-    customer_national_id: str = Field(..., description="Customer national ID")
-    concept: Optional[str] = Field(None, description="Transaction concept/description")
-    banesco_payload: Optional[dict] = Field(
-        None, description="Original Banesco API payload"
-    )
-
-
-class TransactionResponse(BaseModel):
-    """Response model for transaction."""
-
-    id: UUID
-    transaction_id: str
-    reference: str
-    bank: BankType
-    transaction_type: TransactionType
-    status: TransactionStatus
-    customer_full_name: str
-    customer_phone: str
-    customer_national_id: str
-    concept: Optional[str]
-    extra_data: dict
-    created_by: Optional[UUID]
-    created_at: str
-    updated_at: str
-
-    class Config:
-        from_attributes = True
-
-
-class TransactionListResponse(BaseModel):
-    """Response model for transaction list."""
-
-    transactions: list[TransactionResponse]
-    total: int
-    limit: int
-    offset: int
-
-
-# ==================== Router ====================
-
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["transactions"])
 
@@ -79,9 +28,6 @@ def get_transaction_service(
     """Dependency to get transaction service."""
     transaction_repo = TransactionRepository(session)
     return TransactionService(transaction_repo=transaction_repo)
-
-
-# ==================== Endpoints ====================
 
 
 @router.post(
@@ -191,11 +137,11 @@ async def get_transaction(
 async def list_transactions(
     current_user: User = Depends(get_current_user),
     service: TransactionService = Depends(get_transaction_service),
-    status_filter: Optional[TransactionStatus] = Query(
+    status_filter: TransactionStatus | None = Query(
         None, description="Filter by transaction status"
     ),
-    bank_filter: Optional[BankType] = Query(None, description="Filter by bank type"),
-    transaction_type_filter: Optional[TransactionType] = Query(
+    bank_filter: BankType | None = Query(None, description="Filter by bank type"),
+    transaction_type_filter: TransactionType | None = Query(
         None, description="Filter by transaction type"
     ),
     limit: int = Query(50, ge=1, le=100, description="Number of results to return"),
