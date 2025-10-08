@@ -1,7 +1,7 @@
 """Pytest configuration and fixtures."""
 
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 from uuid import uuid4
 
 import pytest
@@ -10,14 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from infrastructure.database.models.base import Base
-from infrastructure.database.models.user import UserModel
-from interface.api.main import app
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-
-from infrastructure.database.models.base import Base
-from infrastructure.database.models.user import UserModel
 from infrastructure.database.models.transaction import TransactionModel
+from infrastructure.database.models.user import UserModel
 from interface.api.main import app
 
 
@@ -161,15 +155,76 @@ async def test_transaction(db_session: AsyncSession, test_user: dict) -> dict:
 
 @pytest.fixture
 def sample_transaction_data():
-    """Sample transaction data for testing."""
+    """Sample transaction data for testing (based on successful endpoint tests)."""
+    unique_id = uuid4().hex[:8]
     return {
-        "transaction_id": "TEST123456789",
-        "customer": {
-            "full_name": "Juan Pérez",
-            "phone": "04161234567",
-            "national_id": "V12345678",
-            "concept": "Pago de consulta médica",
-        },
-        "reference": "123456789",
+        "transaction_id": f"TEST-{unique_id}",
+        "reference": f"REF-{unique_id}",
         "bank": "BANESCO",
+        "transaction_type": "TRANSACTION",
+        "customer_full_name": "Juan Pérez",
+        "customer_phone": "04161234567",
+        "customer_national_id": "V12345678",
+        "concept": "Pago de consulta médica",
     }
+
+
+@pytest.fixture
+def sample_user_registration():
+    """Sample user registration data for testing."""
+    unique_id = uuid4().hex[:8]
+    return {
+        "email": f"test_{unique_id}@example.com",
+        "password": "TestPassword123!",
+        "full_name": "Test User",
+    }
+
+
+@pytest.fixture
+async def authenticated_client(client: AsyncClient):
+    """Create an authenticated test client with valid token."""
+    unique_id = uuid4().hex[:8]
+    user_email = f"auth_{unique_id}@example.com"
+
+    # Register user
+    await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": user_email,
+            "password": "TestPassword123!",
+            "full_name": "Authenticated Test User",
+        },
+    )
+
+    # Login
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": user_email, "password": "TestPassword123!"},
+    )
+    token = login_response.json()["access_token"]
+
+    # Create wrapper class to automatically include auth headers
+    class AuthenticatedClient:
+        def __init__(self, client, token):
+            self.client = client
+            self.headers = {"Authorization": f"Bearer {token}"}
+            self.token = token
+            self.email = user_email
+
+        async def post(self, url, **kwargs):
+            kwargs.setdefault("headers", {}).update(self.headers)
+            return await self.client.post(url, **kwargs)
+
+        async def get(self, url, **kwargs):
+            kwargs.setdefault("headers", {}).update(self.headers)
+            return await self.client.get(url, **kwargs)
+
+        async def put(self, url, **kwargs):
+            kwargs.setdefault("headers", {}).update(self.headers)
+            return await self.client.put(url, **kwargs)
+
+        async def delete(self, url, **kwargs):
+            kwargs.setdefault("headers", {}).update(self.headers)
+            return await self.client.delete(url, **kwargs)
+
+    return AuthenticatedClient(client, token)
