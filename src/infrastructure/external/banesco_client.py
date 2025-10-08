@@ -6,7 +6,12 @@ from typing import Any
 
 import httpx
 import structlog
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = structlog.get_logger()
 
@@ -92,19 +97,19 @@ class BanescoAPIError(Exception):
     pass
 
 
-class BanescoTimeoutError(BanescoAPIError):
+class BanescoTimeoutError(Exception):
     """Raised when Banesco API request times out."""
 
     pass
 
 
-class BanescoRateLimitError(BanescoAPIError):
+class BanescoRateLimitError(Exception):
     """Raised when Banesco API rate limit is exceeded."""
 
     pass
 
 
-class BanescoNotFoundError(BanescoAPIError):
+class BanescoNotFoundError(Exception):
     """Raised when transaction is not found in Banesco."""
 
     pass
@@ -135,6 +140,7 @@ class BanescoClient:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type(BanescoAPIError),
     )
     async def get_transaction_status(self, transaction_id: str) -> dict | None:
         """Get transaction status from Banesco API.

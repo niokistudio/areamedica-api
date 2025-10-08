@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,39 +16,41 @@ from infrastructure.database.models.user import UserModel
 from interface.api.main import app
 
 
-# Test database URL - use a separate test database
+# Test database URL - use the development database for tests
 TEST_DATABASE_URL = (
-    "postgresql+asyncpg://areamedica:password@localhost:5432/areamedica_test"
+    "postgresql+asyncpg://areamedica:password@db:5432/areamedica_dev"
 )
 
 
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def test_engine():
     """Create test database engine."""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
 
     # Create all tables
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
 
-    # Drop all tables
+    # Drop all tables after tests
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
     await engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create database session for tests."""
     async_session = sessionmaker(
@@ -59,7 +62,7 @@ async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
         await session.rollback()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create test client."""
     from httpx import ASGITransport
@@ -70,11 +73,9 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         yield ac
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession) -> dict:
     """Create test user in database."""
-    from uuid import uuid4
-
     from application.services.auth_service import AuthService
 
     auth_service = AuthService(
@@ -130,11 +131,10 @@ def auth_headers(test_user: dict) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_transaction(db_session: AsyncSession, test_user: dict) -> dict:
     """Create test transaction in database."""
     from decimal import Decimal
-    from uuid import uuid4
 
     transaction_data = {
         "id": uuid4(),
@@ -180,7 +180,7 @@ def sample_user_registration():
     }
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def authenticated_client(client: AsyncClient):
     """Create an authenticated test client with valid token."""
     unique_id = uuid4().hex[:8]

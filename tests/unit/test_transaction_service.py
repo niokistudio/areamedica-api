@@ -1,14 +1,18 @@
 """Unit tests for TransactionService."""
 
 from datetime import datetime
-from decimal import Decimal
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
 
 from application.services.transaction_service import TransactionService
-from domain.entities.transaction import BankType, Transaction, TransactionStatus
+from domain.entities.transaction import (
+    BankType,
+    Transaction,
+    TransactionStatus,
+    TransactionType,
+)
 
 
 class TestTransactionService:
@@ -20,12 +24,7 @@ class TestTransactionService:
         return Mock()
 
     @pytest.fixture
-    def mock_banesco_client(self) -> Mock:
-        """Create mock Banesco client."""
-        return Mock()
-
-    @pytest.fixture
-    def service(self, mock_repo: Mock, mock_banesco_client: Mock) -> TransactionService:
+    def service(self, mock_repo: Mock) -> TransactionService:
         """Create TransactionService instance."""
         return TransactionService(transaction_repo=mock_repo)
 
@@ -35,103 +34,135 @@ class TestTransactionService:
     ) -> None:
         """Test transaction creation."""
         user_id = uuid4()
+        transaction_id = "TEST-123"
+        mock_repo.get_by_transaction_id = AsyncMock(return_value=None)
         mock_repo.create = AsyncMock(
             return_value=Transaction(
                 id=uuid4(),
-                user_id=user_id,
-                amount=Decimal("100.50"),
-                reference="REF123",
-                bank=BankType.BANESCO,
+                transaction_id=transaction_id,
                 status=TransactionStatus.IN_PROGRESS,
-                transaction_type="TRANSACTION",
+                bank=BankType.BANESCO,
+                transaction_type=TransactionType.TRANSACTION,
+                reference="REF123",
+                customer_full_name="Juan Pérez",
+                customer_phone="04161234567",
+                customer_national_id="V12345678",
+                concept="Pago de consulta",
+                created_by=user_id,
                 created_at=datetime.utcnow(),
             )
         )
 
-        transaction = await service.create_transaction(
-            user_id=user_id,
-            amount=Decimal("100.50"),
+        transaction = await service.create_or_update_transaction(
+            transaction_id=transaction_id,
             reference="REF123",
             bank=BankType.BANESCO,
+            transaction_type=TransactionType.TRANSACTION,
+            customer_full_name="Juan Pérez",
+            customer_phone="04161234567",
+            customer_national_id="V12345678",
+            concept="Pago de consulta",
+            created_by=user_id,
         )
 
-        assert transaction.user_id == user_id
-        assert transaction.amount == Decimal("100.50")
+        assert transaction.transaction_id == transaction_id
+        assert transaction.reference == "REF123"
         assert transaction.status == TransactionStatus.IN_PROGRESS
         mock_repo.create.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_verify_with_banesco_success(
-        self, service: TransactionService, mock_banesco_client: Mock, mock_repo: Mock
+    async def test_update_existing_transaction(
+        self, service: TransactionService, mock_repo: Mock
     ) -> None:
-        """Test successful Banesco verification."""
-        transaction_id = uuid4()
-        mock_transaction = Transaction(
-            id=transaction_id,
-            user_id=uuid4(),
-            amount=Decimal("100.00"),
-            reference="REF123",
-            bank=BankType.BANESCO,
+        """Test updating an existing transaction."""
+        transaction_id = "TEST-123"
+        existing_transaction = Transaction(
+            id=uuid4(),
+            transaction_id=transaction_id,
             status=TransactionStatus.IN_PROGRESS,
-            transaction_type="TRANSACTION",
+            bank=BankType.BANESCO,
+            transaction_type=TransactionType.TRANSACTION,
+            reference="OLD-REF",
+            customer_full_name="Juan Pérez",
+            customer_phone="04161234567",
+            customer_national_id="V12345678",
+            concept="Concepto antiguo",
             created_at=datetime.utcnow(),
         )
 
-        mock_repo.get_by_id = AsyncMock(return_value=mock_transaction)
-        mock_banesco_client.verify_transaction = AsyncMock(
-            return_value={"status": "approved", "verification_code": "ABC123"}
+        mock_repo.get_by_transaction_id = AsyncMock(return_value=existing_transaction)
+        mock_repo.update = AsyncMock(return_value=existing_transaction)
+
+        transaction = await service.create_or_update_transaction(
+            transaction_id=transaction_id,
+            reference="NEW-REF",
+            bank=BankType.BANESCO,
+            transaction_type=TransactionType.TRANSACTION,
+            customer_full_name="Juan Actualizado",
+            customer_phone="04161234568",
+            customer_national_id="V87654321",
+            concept="Concepto nuevo",
         )
-        mock_repo.update = AsyncMock()
 
-        result = await service.verify_with_banesco(transaction_id)
-
-        assert result["status"] == "approved"
-        mock_banesco_client.verify_transaction.assert_called_once_with("REF123")
+        assert transaction.reference == "NEW-REF"
+        assert transaction.customer_full_name == "Juan Actualizado"
         mock_repo.update.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_verify_transaction_not_found(
+    async def test_get_transaction_by_id(
         self, service: TransactionService, mock_repo: Mock
     ) -> None:
-        """Test verification when transaction not found."""
-        mock_repo.get_by_id = AsyncMock(return_value=None)
+        """Test getting transaction by ID."""
+        transaction_id = uuid4()
+        expected_transaction = Transaction(
+            id=transaction_id,
+            transaction_id="TEST-123",
+            status=TransactionStatus.IN_PROGRESS,
+            bank=BankType.BANESCO,
+            transaction_type=TransactionType.TRANSACTION,
+            reference="REF123",
+            customer_full_name="Juan Pérez",
+            customer_phone="04161234567",
+            customer_national_id="V12345678",
+            created_at=datetime.utcnow(),
+        )
 
-        with pytest.raises(ValueError, match="Transaction not found"):
-            await service.verify_with_banesco(uuid4())
+        mock_repo.get_by_id = AsyncMock(return_value=expected_transaction)
+
+        transaction = await service.get_transaction_by_id(transaction_id)
+
+        assert transaction == expected_transaction
+        mock_repo.get_by_id.assert_called_once_with(transaction_id)
 
     @pytest.mark.asyncio
-    async def test_list_transactions_with_filters(
+    async def test_list_transactions(
         self, service: TransactionService, mock_repo: Mock
     ) -> None:
         """Test listing transactions with filters."""
-        user_id = uuid4()
-        mock_transactions = [
+        expected_transactions = [
             Transaction(
                 id=uuid4(),
-                user_id=user_id,
-                amount=Decimal("50.00"),
-                reference=f"REF{i}",
+                transaction_id=f"TEST-{i}",
+                status=TransactionStatus.IN_PROGRESS,
                 bank=BankType.BANESCO,
-                status=TransactionStatus.COMPLETED,
-                transaction_type="TRANSACTION",
+                transaction_type=TransactionType.TRANSACTION,
+                reference=f"REF{i}",
+                customer_full_name=f"Customer {i}",
+                customer_phone="04161234567",
+                customer_national_id=f"V1234567{i}",
                 created_at=datetime.utcnow(),
             )
             for i in range(3)
         ]
 
-        mock_repo.list_by_user = AsyncMock(return_value=mock_transactions)
+        mock_repo.list_by_filters = AsyncMock(return_value=expected_transactions)
 
         transactions = await service.list_transactions(
-            user_id=user_id,
-            status=TransactionStatus.COMPLETED,
+            status=TransactionStatus.IN_PROGRESS,
+            skip=0,
             limit=10,
-            offset=0,
         )
 
         assert len(transactions) == 3
-        mock_repo.list_by_user.assert_called_once_with(
-            user_id=user_id,
-            status=TransactionStatus.COMPLETED,
-            limit=10,
-            offset=0,
-        )
+        assert transactions == expected_transactions
+        mock_repo.list_by_filters.assert_called_once()
