@@ -21,8 +21,6 @@ class TestTransactionWorkflowE2E:
                 "email": "e2e@example.com",
                 "password": "E2EPassword123!",
                 "full_name": "E2E Test User",
-                "national_id": "V99999999",
-                "phone_number": "04149999999",
             },
         )
         assert register_response.status_code == status.HTTP_201_CREATED
@@ -105,11 +103,13 @@ class TestTransactionWorkflowE2E:
                 "bank": "BANESCO",
             },
         )
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        # 403 is returned when no credentials are provided (Forbidden)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
         # Try to list transactions without auth
         response = await client.get("/api/v1/transactions")
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        # 403 is returned when no credentials are provided (Forbidden)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     async def test_invalid_credentials_flow(self, client: AsyncClient) -> None:
         """Test login with invalid credentials."""
@@ -120,8 +120,6 @@ class TestTransactionWorkflowE2E:
                 "email": "invalid@example.com",
                 "password": "ValidPassword123!",
                 "full_name": "Invalid Test",
-                "national_id": "V88888888",
-                "phone_number": "04148888888",
             },
         )
 

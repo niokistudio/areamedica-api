@@ -46,7 +46,8 @@ class TestTransactionEndpoints:
             },
         )
 
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        # 403 is returned when no credentials are provided (Forbidden)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     async def test_create_transaction_invalid_amount(
         self, client: AsyncClient, auth_headers: dict

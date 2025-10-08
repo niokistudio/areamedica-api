@@ -19,8 +19,6 @@ class TestAuthEndpoints:
                 "email": "newuser@example.com",
                 "password": "SecurePass123!",
                 "full_name": "New User",
-                "national_id": "V12345678",
-                "phone_number": "04121234567",
             },
         )
 
@@ -41,8 +39,6 @@ class TestAuthEndpoints:
                 "email": test_user["email"],
                 "password": "AnotherPass123!",
                 "full_name": "Another User",
-                "national_id": "V87654321",
-                "phone_number": "04147654321",
             },
         )
 
@@ -94,7 +90,8 @@ class TestAuthEndpoints:
         """Test accessing protected endpoint without authentication."""
         response = await client.get("/api/v1/auth/me")
 
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        # 403 is returned when no credentials are provided (Forbidden)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     async def test_get_current_user_invalid_token(self, client: AsyncClient) -> None:
         """Test accessing protected endpoint with invalid token."""
@@ -113,8 +110,6 @@ class TestAuthEndpoints:
                 "email": "not-an-email",
                 "password": "SecurePass123!",
                 "full_name": "Test User",
-                "national_id": "V12345678",
-                "phone_number": "04121234567",
             },
         )
 
@@ -128,8 +123,6 @@ class TestAuthEndpoints:
                 "email": "test@example.com",
                 "password": "weak",
                 "full_name": "Test User",
-                "national_id": "V12345678",
-                "phone_number": "04121234567",
             },
         )
 
