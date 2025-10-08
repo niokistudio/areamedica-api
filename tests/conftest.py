@@ -17,9 +17,7 @@ from interface.api.main import app
 
 
 # Test database URL - use the development database for tests
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://areamedica:password@db:5432/areamedica_dev"
-)
+TEST_DATABASE_URL = "postgresql+asyncpg://areamedica:password@db:5432/areamedica_dev"
 
 
 @pytest.fixture(scope="session")
@@ -90,8 +88,6 @@ async def test_user(db_session: AsyncSession) -> dict:
         "password": "TestPassword123!",
         "password_hash": auth_service.get_password_hash("TestPassword123!"),
         "full_name": "Test User",
-        "national_id": "V12345678",
-        "phone_number": "04121234567",
         "is_active": True,
     }
 
@@ -100,8 +96,6 @@ async def test_user(db_session: AsyncSession) -> dict:
         email=user_data["email"],
         password_hash=user_data["password_hash"],
         full_name=user_data["full_name"],
-        national_id=user_data["national_id"],
-        phone_number=user_data["phone_number"],
         is_active=user_data["is_active"],
     )
 

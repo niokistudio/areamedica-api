@@ -94,7 +94,7 @@ class TestBanescoClient:
         mock_response.status_code = 404
 
         banesco_client.client.get = AsyncMock(return_value=mock_response)
-        
+
         with pytest.raises(BanescoNotFoundError):
             await banesco_client.get_transaction_status("REF123")
 
@@ -107,7 +107,7 @@ class TestBanescoClient:
         mock_response.status_code = 429
 
         banesco_client.client.get = AsyncMock(return_value=mock_response)
-        
+
         with pytest.raises(BanescoRateLimitError):
             await banesco_client.get_transaction_status("REF123")
 
@@ -119,6 +119,6 @@ class TestBanescoClient:
         banesco_client.client.get = AsyncMock(
             side_effect=httpx.TimeoutException("Timeout")
         )
-        
+
         with pytest.raises(BanescoTimeoutError):
             await banesco_client.get_transaction_status("REF123")

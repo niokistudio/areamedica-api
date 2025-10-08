@@ -155,14 +155,16 @@ class TestTransactionService:
             for i in range(3)
         ]
 
-        mock_repo.list_by_filters = AsyncMock(return_value=expected_transactions)
+        # Mock returns (transactions, total_count)
+        mock_repo.list_with_filters = AsyncMock(return_value=(expected_transactions, 3))
 
-        transactions = await service.list_transactions(
+        transactions, total = await service.list_transactions(
             status=TransactionStatus.IN_PROGRESS,
-            skip=0,
             limit=10,
+            offset=0,
         )
 
         assert len(transactions) == 3
+        assert total == 3
         assert transactions == expected_transactions
-        mock_repo.list_by_filters.assert_called_once()
+        mock_repo.list_with_filters.assert_called_once()
