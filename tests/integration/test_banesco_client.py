@@ -81,6 +81,7 @@ class TestBanescoClient:
         banesco_client.client.get = AsyncMock(return_value=mock_response)
         result = await banesco_client.get_transaction_status("REF123")
 
+        assert result is not None
         assert result["status"] == "approved"
         assert result["reference"] == "REF123"
         assert result["amount"] == 100.50

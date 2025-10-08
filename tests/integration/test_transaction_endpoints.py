@@ -1,6 +1,5 @@
 """Integration tests for transaction endpoints."""
 
-from decimal import Decimal
 from uuid import uuid4
 
 import pytest

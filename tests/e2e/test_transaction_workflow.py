@@ -1,7 +1,5 @@
 """E2E tests for complete transaction workflow."""
 
-from decimal import Decimal
-from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
