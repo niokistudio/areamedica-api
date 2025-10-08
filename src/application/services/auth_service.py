@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from domain.entities.user import User
 
@@ -23,15 +23,18 @@ class AuthService:
         self.secret_key = secret_key or os.getenv("SECRET_KEY", "your-secret-key-here")
         self.algorithm = algorithm
         self.access_token_expire_minutes = access_token_expire_minutes
-        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a plain password against a hashed password."""
-        return self.pwd_context.verify(plain_password, hashed_password)
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
 
     def get_password_hash(self, password: str) -> str:
         """Generate password hash."""
-        return self.pwd_context.hash(password)
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8")
 
     def create_access_token(
         self, user_id: UUID, email: str, permissions: list[str] | None = None

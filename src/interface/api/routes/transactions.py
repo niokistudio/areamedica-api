@@ -41,6 +41,7 @@ async def create_transaction(
     request: CreateTransactionRequest,
     current_user: User = Depends(get_current_user),
     service: TransactionService = Depends(get_transaction_service),
+    session: AsyncSession = Depends(get_db_session),
 ) -> TransactionResponse:
     """
     Create or update a transaction.
@@ -62,6 +63,9 @@ async def create_transaction(
             created_by=current_user.id,
         )
 
+        # Commit the transaction to the database
+        await session.commit()
+
         return TransactionResponse(
             id=transaction.id,
             transaction_id=transaction.transaction_id,
@@ -79,11 +83,13 @@ async def create_transaction(
             updated_at=transaction.updated_at.isoformat(),
         )
     except ValueError as e:
+        await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         ) from e
     except Exception as e:
+        await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error creating transaction: {str(e)}",

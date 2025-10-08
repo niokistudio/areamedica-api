@@ -2,7 +2,7 @@
 
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, String
+from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, SoftDeleteMixin, TimestampMixin
@@ -23,6 +23,8 @@ class UserModel(Base, TimestampMixin, SoftDeleteMixin):
     permissions = relationship(
         "PermissionModel",
         secondary="user_permissions",
+        primaryjoin="UserModel.id == UserPermissionModel.user_id",
+        secondaryjoin="PermissionModel.id == UserPermissionModel.permission_id",
         back_populates="users",
         lazy="selectin",
     )
@@ -47,6 +49,8 @@ class PermissionModel(Base, TimestampMixin):
     users = relationship(
         "UserModel",
         secondary="user_permissions",
+        primaryjoin="PermissionModel.id == UserPermissionModel.permission_id",
+        secondaryjoin="UserModel.id == UserPermissionModel.user_id",
         back_populates="permissions",
         lazy="select",
     )
@@ -60,11 +64,15 @@ class UserPermissionModel(Base, TimestampMixin):
 
     __tablename__ = "user_permissions"
 
-    user_id: Mapped[UUID] = mapped_column("user_id", primary_key=True, nullable=False)
-    permission_id: Mapped[UUID] = mapped_column(
-        "permission_id", primary_key=True, nullable=False
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id"), primary_key=True, nullable=False
     )
-    granted_by: Mapped[UUID | None] = mapped_column("granted_by", nullable=True)
+    permission_id: Mapped[UUID] = mapped_column(
+        ForeignKey("permissions.id"), primary_key=True, nullable=False
+    )
+    granted_by: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
 
     def __repr__(self) -> str:
         return f"<UserPermission(user_id={self.user_id}, permission_id={self.permission_id})>"
