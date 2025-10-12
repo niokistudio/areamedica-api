@@ -39,10 +39,18 @@ Banking Transaction Management System with Banesco integration.
 
 The API will be available at: http://localhost:8000
 
-## 📖 API Documentation
+## 📖 Documentation
 
+### API Documentation
+- **Complete API Docs**: [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md) - Guía completa con ejemplos de endpoints, errores estandarizados, autenticación JWT, y datos de prueba
+- **CSV Reference**: [`api_requests_responses.csv`](./api_requests_responses.csv) - Referencia rápida de requests/responses
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+
+### Additional Docs
+- **Development Summary**: [`DEVELOPMENT_SUMMARY.md`](./DEVELOPMENT_SUMMARY.md)
+- **ERD Documentation**: [`ERD-Backend-API.md`](./ERD-Backend-API.md)
+- **Terraform Deployment**: [`terraform/README.md`](./terraform/README.md)
 
 ## 🛠️ Development Commands
 

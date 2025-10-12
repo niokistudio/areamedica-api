@@ -17,9 +17,9 @@ from domain.entities.user import User
 from infrastructure.database.connection import get_db_session
 from infrastructure.database.repositories import UserRepository
 from interface.api.exceptions import (
+    AlreadyExistsError,
     InvalidCredentialsError,
     UnauthorizedError,
-    AlreadyExistsError,
 )
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])

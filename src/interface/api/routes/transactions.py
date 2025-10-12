@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.dto.transaction_dto import (
@@ -18,6 +18,7 @@ from infrastructure.database.repositories.transaction_repository import (
     TransactionRepository,
 )
 from interface.api.routes.auth import get_current_user
+from interface.api.exceptions import NotFoundError, ValidationError, AlreadyExistsError
 
 router = APIRouter(prefix="/api/v1/transactions", tags=["Transactions"])
 
@@ -84,15 +85,11 @@ async def create_transaction(
         )
     except ValueError as e:
         await session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        ) from e
+        raise ValidationError(message=str(e)) from e
     except Exception as e:
         await session.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating transaction: {str(e)}",
+        raise ValidationError(
+            message="Error creating transaction", details={"error": str(e)}
         ) from e
 
 
@@ -111,10 +108,7 @@ async def get_transaction(
     transaction = await service.get_transaction_by_id(transaction_id)
 
     if not transaction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Transaction with ID {transaction_id} not found",
-        )
+        raise NotFoundError(resource="Transaction", identifier=str(transaction_id))
 
     return TransactionResponse(
         id=transaction.id,
@@ -214,10 +208,7 @@ async def get_transaction_by_reference(
     transaction = await service.get_transaction_by_reference(reference)
 
     if not transaction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Transaction with reference {reference} not found",
-        )
+        raise NotFoundError(resource="Transaction", identifier=reference)
 
     return TransactionResponse(
         id=transaction.id,
@@ -252,10 +243,7 @@ async def get_transaction_by_transaction_id(
     transaction = await service.get_transaction_by_transaction_id(transaction_id)
 
     if not transaction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Transaction with transaction_id {transaction_id} not found",
-        )
+        raise NotFoundError(resource="Transaction", identifier=transaction_id)
 
     return TransactionResponse(
         id=transaction.id,

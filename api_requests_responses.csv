@@ -1,3 +1,7 @@
+# AreaMédica API - Requests & Responses Reference
+# Este archivo contiene ejemplos completos de todas las peticiones y respuestas de la API
+# Para documentación completa ver: API_DOCUMENTATION.md
+# Actualizado: 12 de Octubre 2025
 Endpoint,Method,Description,Request Body,Response Example,Status Code,Notes
 /health,GET,Health check endpoint,N/A,"{"status":"healthy","service":"areamedica-api"}",200,No authentication required
 /api/v1/auth/login,POST,User login,"{"email":"admin@areamedica.com","password":"Admin123!"}","{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNWU3YmY1Mi00ZTdmLTRhMTktYjljYy1lNTQ5ZDAxODdlODciLCJlbWFpbCI6ImFkbWluQGFyZWFtZWRpY2EuY29tIiwicGVybWlzc2lvbnMiOltdLCJleHAiOjE3NjAyOTYxMTV9.K1Ds_yN-r2hJZVhIqycXf4eXwG0YCuC6TwKY89dktBQ","token_type":"bearer"}",200,Returns JWT token
