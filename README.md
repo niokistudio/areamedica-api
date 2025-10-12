@@ -152,29 +152,28 @@ Target coverage: **85%** for `src/` directory.
 
 ## 🚀 Deployment
 
-### Option 1: Render (Recommended for Production)
+### Option 1: Koyeb (Recommended for Testing/MVP)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
-
-Render deployment using Infrastructure as Code with `render.yaml`:
+Koyeb deployment using Infrastructure as Code with `koyeb.yaml`:
 
 ```bash
-# 1. Connect your repository to Render
-# 2. Select "Blueprint" deployment
-# 3. Render will auto-detect render.yaml
-# 4. Configure environment secrets (Banesco API keys)
+# 1. Connect your repository to Koyeb
+# 2. Select "Docker" deployment
+# 3. Koyeb will auto-detect koyeb.yaml
+# 4. Configure environment variables
 # 5. Deploy!
 ```
 
 **Features**:
+- ✅ 100% Free tier (no credit card required)
 - ✅ Auto-deploy from `main` branch
-- ✅ Automatic migrations (`alembic upgrade head`)
+- ✅ Automatic migrations via start script
 - ✅ Health checks on `/health`
-- ✅ PostgreSQL + Redis managed services
-- ✅ SSL certificates (Let's Encrypt)
-- ✅ Zero-downtime deployments
+- ✅ PostgreSQL via Neon integration
+- ✅ SSL certificates automatic
+- ✅ Always active (no sleep)
 
-**Estimated Cost**: ~$55/month (Standard plan) or ~$14/month (Starter plan)
+**Cost**: **FREE** (512 MB RAM, 2 GB storage)
 
 ### Option 2: DigitalOcean (IaC with Terraform)
 
