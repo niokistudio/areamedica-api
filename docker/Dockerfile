@@ -30,4 +30,4 @@ USER app
 EXPOSE 8000
 
 # Use start script that handles migrations
-CMD ["/app/scripts/start.sh"]
+CMD ["bash", "/app/scripts/start.sh"]

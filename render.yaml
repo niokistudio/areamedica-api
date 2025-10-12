@@ -20,7 +20,7 @@ services:
     healthCheckPath: /health
 
     # Start command - use script that runs migrations
-    startCommand: /app/scripts/start.sh
+    startCommand: bash /app/scripts/start.sh
 
     # Environment variables
     envVars:
