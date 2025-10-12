@@ -7,7 +7,7 @@ services:
   - type: web
     name: areamedica-api
     runtime: docker
-    plan: free  # ✅ FREE plan for testing (no credit card required)
+    plan: free # ✅ FREE plan for testing (no credit card required)
     region: oregon
     dockerfilePath: ./docker/Dockerfile
     dockerContext: .
@@ -23,10 +23,10 @@ services:
     envVars:
       # Application
       - key: ENVIRONMENT
-        value: development  # ✅ Development mode for testing
+        value: development # ✅ Development mode for testing
 
       - key: DEBUG
-        value: "true"  # ✅ Debug enabled for testing
+        value: "true" # ✅ Debug enabled for testing
 
       - key: LOG_LEVEL
         value: INFO
@@ -79,7 +79,7 @@ services:
 databases:
   # PostgreSQL Database
   - name: areamedica-db
-    plan: free  # ✅ FREE plan (90 days free trial, then expires or upgrade)
+    plan: free # ✅ FREE plan (90 days free trial, then expires or upgrade)
     databaseName: areamedica
     user: areamedica_user
     region: oregon
