@@ -2,7 +2,7 @@
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,11 @@ from application.services.auth_service import AuthService
 from domain.entities.user import User
 from infrastructure.database.connection import get_db_session
 from infrastructure.database.repositories import UserRepository
+from interface.api.exceptions import (
+    InvalidCredentialsError,
+    UnauthorizedError,
+    AlreadyExistsError,
+)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 security = HTTPBearer()
@@ -37,27 +42,16 @@ async def get_current_user(
     try:
         user_id = auth_service.extract_user_id_from_token(token)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
+        raise UnauthorizedError(message=str(e)) from e
 
     user_repo = UserRepository(session)
     user = await user_repo.get_by_id(user_id)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise UnauthorizedError(message="User not found")
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user",
-        )
+        raise UnauthorizedError(message="Inactive user")
 
     return user
 
@@ -76,10 +70,7 @@ async def register(
     # Check if user already exists
     existing_user = await user_repo.get_by_email(request.email)
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
+        raise AlreadyExistsError(resource="User", identifier=request.email)
 
     # Create new user
     password_hash = auth_service.get_password_hash(request.password)
@@ -116,26 +107,15 @@ async def login(
     # Get user by email
     user = await user_repo.get_by_email(request.email)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise InvalidCredentialsError()
 
     # Verify password
     if not auth_service.verify_password(request.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise InvalidCredentialsError()
 
     # Check if user is active
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user",
-        )
+        raise UnauthorizedError(message="Inactive user")
 
     # Create access token
     permissions = [p.name for p in user.permissions]
