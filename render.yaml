@@ -1,4 +1,4 @@
-# Render Blueprint - AreaMédica API
+# Render Blueprint - AreaMédica API (FREE TIER - Testing)
 # Documentation: https://render.com/docs/blueprint-spec
 # Version: 1.0.0
 
@@ -7,7 +7,7 @@ services:
   - type: web
     name: areamedica-api
     runtime: docker
-    plan: standard
+    plan: free  # ✅ FREE plan for testing (no credit card required)
     region: oregon
     dockerfilePath: ./docker/Dockerfile
     dockerContext: .
@@ -23,17 +23,17 @@ services:
     envVars:
       # Application
       - key: ENVIRONMENT
-        value: production
+        value: development  # ✅ Development mode for testing
 
       - key: DEBUG
-        value: "false"
+        value: "true"  # ✅ Debug enabled for testing
 
       - key: LOG_LEVEL
         value: INFO
 
-      # Security - USE RENDER SECRETS FOR THESE
+      # Security
       - key: SECRET_KEY
-        generateValue: true # Auto-generate secure secret
+        value: test-secret-key-change-in-production-min-32-chars-abc123
 
       - key: ALGORITHM
         value: HS256
@@ -47,76 +47,25 @@ services:
           name: areamedica-db
           property: connectionString
 
-      - key: DATABASE_HOST
-        fromDatabase:
-          name: areamedica-db
-          property: host
-
-      - key: DATABASE_PORT
-        fromDatabase:
-          name: areamedica-db
-          property: port
-
-      - key: DATABASE_NAME
-        fromDatabase:
-          name: areamedica-db
-          property: database
-
-      - key: DATABASE_USER
-        fromDatabase:
-          name: areamedica-db
-          property: user
-
-      - key: DATABASE_PASSWORD
-        fromDatabase:
-          name: areamedica-db
-          property: password
-
-      # Redis - Connect to Render Redis
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: areamedica-redis
-          property: host
-
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: areamedica-redis
-          property: port
-
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: areamedica-redis
-          property: connectionString
-
-      - key: REDIS_DB
-        value: 0
-
-      # CORS Configuration
+      # CORS Configuration (allow all for testing)
       - key: CORS_ORIGINS
-        value: https://areamedica.com,https://www.areamedica.com,https://admin.areamedica.com
+        value: "*"
 
-      # Rate Limiting
-      - key: RATE_LIMIT_ENABLED
-        value: "true"
-
-      - key: RATE_LIMIT_PER_MINUTE
-        value: 60
-
-      # Banesco Integration - ADD THESE AS SECRETS IN RENDER DASHBOARD
-      - key: BANESCO_API_URL
-        sync: false # Requires manual configuration
+      # Banesco Integration - Fake values for testing
+      - key: BANESCO_BASE_URL
+        value: https://fake-api.com
 
       - key: BANESCO_API_KEY
-        sync: false # Requires manual configuration
+        value: test-api-key
 
       - key: BANESCO_USERNAME
-        sync: false # Requires manual configuration
+        value: test-user
 
       - key: BANESCO_PASSWORD
-        sync: false # Requires manual configuration
+        value: test-password
+
+      - key: BANESCO_TIMEOUT
+        value: 30
 
     # Build configuration
     buildCommand: |
@@ -126,17 +75,11 @@ services:
     # Pre-deploy command (migrations)
     preDeployCommand: alembic upgrade head
 
-    # Disk for persistent storage (optional)
-    disk:
-      name: data
-      mountPath: /app/data
-      sizeGB: 1
-
 # Databases
 databases:
   # PostgreSQL Database
   - name: areamedica-db
-    plan: standard
+    plan: free  # ✅ FREE plan (90 days free trial, then expires or upgrade)
     databaseName: areamedica
     user: areamedica_user
     region: oregon
@@ -144,11 +87,8 @@ databases:
     # Automatic backups
     ipAllowList: [] # Empty = accessible from all Render services
 
-  # Redis Instance
-  - name: areamedica-redis
-    plan: standard
-    region: oregon
-    ipAllowList: [] # Empty = accessible from all Render services
+# ✅ REDIS REMOVED - Free plan doesn't support managed Redis
+# The app will work without Redis for testing purposes
 
 # Background Workers (optional)
 # Uncomment if you need background job processing
