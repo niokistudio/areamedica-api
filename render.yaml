@@ -67,15 +67,6 @@ services:
       - key: BANESCO_TIMEOUT
         value: 30
 
-    # Build configuration
-    buildCommand: |
-      pip install --upgrade pip
-      pip install -r requirements/prod.txt
-
-    # ⚠️ Pre-deploy command NOT supported in FREE tier
-    # Run migrations manually after deploy using Shell:
-    # alembic upgrade head
-
 # Databases
 databases:
   # PostgreSQL Database

@@ -18,6 +18,9 @@ COPY migrations/ ./migrations/
 COPY scripts/ ./scripts/
 COPY alembic.ini ./
 
+# Make start script executable
+RUN chmod +x /app/scripts/start.sh
+
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app && \
     chown -R app:app /app
@@ -26,4 +29,5 @@ USER app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.interface.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use start script that handles migrations
+CMD ["/app/scripts/start.sh"]
