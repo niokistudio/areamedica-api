@@ -152,7 +152,74 @@ Target coverage: **85%** for `src/` directory.
 
 ## 🚀 Deployment
 
-### Production Build
+### Option 1: Render (Recommended for Production)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+
+Render deployment using Infrastructure as Code with `render.yaml`:
+
+```bash
+# 1. Connect your repository to Render
+# 2. Select "Blueprint" deployment
+# 3. Render will auto-detect render.yaml
+# 4. Configure environment secrets (Banesco API keys)
+# 5. Deploy!
+```
+
+**Features**:
+- ✅ Auto-deploy from `main` branch
+- ✅ Automatic migrations (`alembic upgrade head`)
+- ✅ Health checks on `/health`
+- ✅ PostgreSQL + Redis managed services
+- ✅ SSL certificates (Let's Encrypt)
+- ✅ Zero-downtime deployments
+
+**Estimated Cost**: ~$55/month (Standard plan) or ~$14/month (Starter plan)
+
+### Option 2: DigitalOcean (IaC with Terraform)
+
+Infrastructure as Code deployment using Terraform:
+
+```bash
+cd terraform/
+
+# Initialize Terraform
+terraform init
+
+# Review changes
+terraform plan
+
+# Deploy infrastructure
+terraform apply
+
+# See outputs
+terraform output
+```
+
+📖 **Terraform Guide**: See [`terraform/README.md`](./terraform/README.md)
+
+**Features**:
+- ✅ Complete infrastructure as code
+- ✅ VPC network isolation
+- ✅ Managed PostgreSQL cluster
+- ✅ Redis cache
+- ✅ Droplet with Docker
+- ✅ Monitoring with Prometheus/Grafana
+
+### Option 3: Docker Compose (Development/Testing)
+
+```bash
+# Build and start all services
+make docker-up
+
+# View logs
+make docker-logs
+
+# Stop services
+make docker-down
+```
+
+### Option 4: Manual Production Build
 
 ```bash
 # Build production image
@@ -164,12 +231,31 @@ make run-prod
 
 ### Environment Variables for Production
 
-Make sure to set these in production:
-- `SECRET_KEY`: Strong random key
-- `DATABASE_URL`: Production database
-- `BANESCO_API_KEY`: Production Banesco credentials
-- `ENVIRONMENT=production`
-- `DEBUG=false`
+**Critical variables to configure**:
+```bash
+SECRET_KEY=your_production_secret_key_here  # Generate with: openssl rand -hex 32
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+REDIS_URL=redis://host:6379/0
+BANESCO_API_KEY=your_banesco_api_key
+ENVIRONMENT=production
+DEBUG=false
+```
+
+See `.env.production.example` for complete list.
+
+### Deployment Checklist
+
+Before deploying to production:
+
+- [ ] Set `SECRET_KEY` to a strong random value
+- [ ] Configure Banesco API credentials
+- [ ] Set `DEBUG=false`
+- [ ] Configure `CORS_ORIGINS` with your frontend domains
+- [ ] Run migrations: `alembic upgrade head`
+- [ ] Verify health check: `curl https://your-domain.com/health`
+- [ ] Configure SSL certificates
+- [ ] Set up monitoring and alerts
+- [ ] Configure backup strategy for database
 
 ## 📋 API Endpoints
 

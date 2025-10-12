@@ -1,0 +1,185 @@
+# Render Blueprint - AreaMédica API
+# Documentation: https://render.com/docs/blueprint-spec
+# Version: 1.0.0
+
+services:
+  # FastAPI Application
+  - type: web
+    name: areamedica-api
+    runtime: docker
+    plan: standard
+    region: oregon
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+
+    # Auto-deploy configuration
+    branch: main
+    autoDeploy: true
+
+    # Health check configuration
+    healthCheckPath: /health
+
+    # Environment variables
+    envVars:
+      # Application
+      - key: ENVIRONMENT
+        value: production
+
+      - key: DEBUG
+        value: "false"
+
+      - key: LOG_LEVEL
+        value: INFO
+
+      # Security - USE RENDER SECRETS FOR THESE
+      - key: SECRET_KEY
+        generateValue: true # Auto-generate secure secret
+
+      - key: ALGORITHM
+        value: HS256
+
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+
+      # Database - Connect to Render PostgreSQL
+      - key: DATABASE_URL
+        fromDatabase:
+          name: areamedica-db
+          property: connectionString
+
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: areamedica-db
+          property: host
+
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: areamedica-db
+          property: port
+
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: areamedica-db
+          property: database
+
+      - key: DATABASE_USER
+        fromDatabase:
+          name: areamedica-db
+          property: user
+
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: areamedica-db
+          property: password
+
+      # Redis - Connect to Render Redis
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: areamedica-redis
+          property: host
+
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: areamedica-redis
+          property: port
+
+      - key: REDIS_PASSWORD
+        fromService:
+          type: redis
+          name: areamedica-redis
+          property: connectionString
+
+      - key: REDIS_DB
+        value: 0
+
+      # CORS Configuration
+      - key: CORS_ORIGINS
+        value: https://areamedica.com,https://www.areamedica.com,https://admin.areamedica.com
+
+      # Rate Limiting
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 60
+
+      # Banesco Integration - ADD THESE AS SECRETS IN RENDER DASHBOARD
+      - key: BANESCO_API_URL
+        sync: false # Requires manual configuration
+
+      - key: BANESCO_API_KEY
+        sync: false # Requires manual configuration
+
+      - key: BANESCO_USERNAME
+        sync: false # Requires manual configuration
+
+      - key: BANESCO_PASSWORD
+        sync: false # Requires manual configuration
+
+    # Build configuration
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements/prod.txt
+
+    # Pre-deploy command (migrations)
+    preDeployCommand: alembic upgrade head
+
+    # Disk for persistent storage (optional)
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 1
+
+# Databases
+databases:
+  # PostgreSQL Database
+  - name: areamedica-db
+    plan: standard
+    databaseName: areamedica
+    user: areamedica_user
+    region: oregon
+
+    # Automatic backups
+    ipAllowList: [] # Empty = accessible from all Render services
+
+  # Redis Instance
+  - name: areamedica-redis
+    plan: standard
+    region: oregon
+    ipAllowList: [] # Empty = accessible from all Render services
+
+# Background Workers (optional)
+# Uncomment if you need background job processing
+# - type: worker
+#   name: areamedica-worker
+#   runtime: docker
+#   plan: standard
+#   region: oregon
+#   dockerfilePath: ./docker/Dockerfile
+#   dockerContext: .
+#   branch: main
+#   autoDeploy: true
+#
+#   # Worker command
+#   startCommand: celery -A src.infrastructure.celery.app worker --loglevel=info
+#
+#   # Share environment variables with web service
+#   envVars:
+#     - fromGroup: areamedica-api
+
+# Cron Jobs (optional)
+# Uncomment for scheduled tasks
+# - type: cron
+#   name: areamedica-cleanup
+#   runtime: docker
+#   schedule: "0 2 * * *"  # Daily at 2 AM
+#   dockerfilePath: ./docker/Dockerfile
+#   dockerContext: .
+#
+#   # Cleanup command
+#   startCommand: python -m src.scripts.cleanup_old_transactions
+#
+#   envVars:
+#     - fromGroup: areamedica-api
