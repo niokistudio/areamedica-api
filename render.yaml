@@ -79,13 +79,11 @@ services:
 databases:
   # PostgreSQL Database
   - name: areamedica-db
-    plan: free # ✅ FREE plan (90 days free trial, then expires or upgrade)
     databaseName: areamedica
     user: areamedica_user
+    plan: free
     region: oregon
-
-    # Automatic backups
-    ipAllowList: [] # Empty = accessible from all Render services
+    ipAllowList: []
 
 # ✅ REDIS REMOVED - Free plan doesn't support managed Redis
 # The app will work without Redis for testing purposes
