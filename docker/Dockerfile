@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 
+# Build version: 2024-10-12-v2
 WORKDIR /app
 
 # Install system dependencies

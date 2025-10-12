@@ -20,7 +20,8 @@ services:
     healthCheckPath: /health
 
     # Start command - use script that runs migrations
-    startCommand: bash /app/scripts/start.sh
+    # Debug: List files first, then run script
+    startCommand: ls -la /app/scripts/ && bash /app/scripts/start.sh
 
     # Environment variables
     envVars:
