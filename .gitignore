@@ -141,8 +141,5 @@ uploads/
 temp/
 .local/
 
-# Docker
-.dockerignore
-
 # Alembic
 alembic.ini
