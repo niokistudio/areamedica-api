@@ -72,8 +72,9 @@ services:
       pip install --upgrade pip
       pip install -r requirements/prod.txt
 
-    # Pre-deploy command (migrations)
-    preDeployCommand: alembic upgrade head
+    # ⚠️ Pre-deploy command NOT supported in FREE tier
+    # Run migrations manually after deploy using Shell:
+    # alembic upgrade head
 
 # Databases
 databases:
@@ -84,7 +85,6 @@ databases:
     plan: free
     region: oregon
     ipAllowList: []
-
 # ✅ REDIS REMOVED - Free plan doesn't support managed Redis
 # The app will work without Redis for testing purposes
 
