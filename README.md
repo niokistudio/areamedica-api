@@ -152,28 +152,33 @@ Target coverage: **85%** for `src/` directory.
 
 ## 🚀 Deployment
 
-### Option 1: Koyeb (Recommended for Testing/MVP)
+### Option 1: Koyeb (Recommended for Testing/MVP) 🆓
 
-Koyeb deployment using Infrastructure as Code with `koyeb.yaml`:
+**Quick Start**: See [KOYEB_DEPLOYMENT.md](./KOYEB_DEPLOYMENT.md) for complete guide.
 
 ```bash
-# 1. Connect your repository to Koyeb
-# 2. Select "Docker" deployment
-# 3. Koyeb will auto-detect koyeb.yaml
-# 4. Configure environment variables
-# 5. Deploy!
+# 1. Create Neon PostgreSQL database (free): https://neon.tech
+# 2. Sign up for Koyeb: https://app.koyeb.com/auth/signup
+# 3. Connect GitHub repository to Koyeb
+# 4. Select Docker deployment
+# 5. Set environment variables (DATABASE_URL, SECRET_KEY)
+# 6. Deploy!
 ```
 
 **Features**:
-- ✅ 100% Free tier (no credit card required)
+- ✅ **100% Free tier** (no credit card required)
 - ✅ Auto-deploy from `main` branch
 - ✅ Automatic migrations via start script
 - ✅ Health checks on `/health`
-- ✅ PostgreSQL via Neon integration
+- ✅ PostgreSQL via Neon integration (also free)
 - ✅ SSL certificates automatic
-- ✅ Always active (no sleep)
+- ✅ Always active (no sleep/hibernation)
+- ✅ 512 MB RAM, 2 GB storage
 
-**Cost**: **FREE** (512 MB RAM, 2 GB storage)
+**Deployment Time**: ~5 minutes  
+**Cost**: **$0/month**
+
+📚 **[Complete Koyeb Deployment Guide →](./KOYEB_DEPLOYMENT.md)**
 
 ### Option 2: DigitalOcean (IaC with Terraform)
 

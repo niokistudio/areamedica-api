@@ -1,0 +1,132 @@
+# Koyeb Deployment Configuration - AreaMédica API
+# Documentation: https://www.koyeb.com/docs/build-and-deploy/deploy-from-git
+# Version: 1.0.0
+
+app:
+  name: areamedica-api
+  
+services:
+  # FastAPI Application
+  - name: api
+    type: web
+    
+    # Git configuration
+    git:
+      branch: main
+      buildCommand: echo "Using Docker - no build command needed"
+      runCommand: bash /app/scripts/start.sh
+    
+    # Docker configuration
+    docker:
+      dockerfile: docker/Dockerfile
+      target: ""
+      args: []
+    
+    # Instance configuration
+    instance:
+      type: free # FREE tier - no credit card required
+    
+    # Regions
+    regions:
+      - was # Washington D.C.
+    
+    # Scaling
+    scaling:
+      min: 1
+      max: 1
+    
+    # Health check
+    healthcheck:
+      http:
+        port: 8000
+        path: /health
+        initialDelay: 30
+        timeout: 10
+        interval: 30
+        restartLimit: 3
+    
+    # Ports
+    ports:
+      - port: 8000
+        protocol: http
+    
+    # Environment variables
+    env:
+      # Application
+      - name: ENVIRONMENT
+        value: production
+      
+      - name: DEBUG
+        value: "false"
+      
+      - name: LOG_LEVEL
+        value: INFO
+      
+      # Server
+      - name: PORT
+        value: "8000"
+      
+      # Security (IMPORTANT: Change these in production!)
+      - name: SECRET_KEY
+        type: secret
+        value: "" # Set this in Koyeb dashboard
+      
+      - name: ALGORITHM
+        value: HS256
+      
+      - name: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      
+      # Database - Will be set after creating Neon PostgreSQL
+      - name: DATABASE_URL
+        type: secret
+        value: "" # Set this in Koyeb dashboard
+      
+      # CORS Configuration
+      - name: CORS_ORIGINS
+        value: "*" # Change to your frontend domain in production
+      
+      - name: CORS_ALLOW_CREDENTIALS
+        value: "true"
+      
+      - name: CORS_ALLOW_METHODS
+        value: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+      
+      - name: CORS_ALLOW_HEADERS
+        value: "*"
+      
+      # Banesco Integration - Fake values for testing
+      - name: BANESCO_BASE_URL
+        value: https://fake-api.banesco.com
+      
+      - name: BANESCO_API_KEY
+        type: secret
+        value: "" # Set this in Koyeb dashboard
+      
+      - name: BANESCO_USERNAME
+        value: test-user
+      
+      - name: BANESCO_PASSWORD
+        type: secret
+        value: "" # Set this in Koyeb dashboard
+      
+      - name: BANESCO_TIMEOUT
+        value: "30"
+      
+      # Rate Limiting (Redis disabled for free tier)
+      - name: RATE_LIMIT_ENABLED
+        value: "false"
+      
+      # Monitoring
+      - name: ENABLE_METRICS
+        value: "true"
+      
+      - name: ENABLE_TRACING
+        value: "false"
+
+# Notes:
+# 1. Create a Neon PostgreSQL database: https://neon.tech (FREE)
+# 2. Set DATABASE_URL secret in Koyeb dashboard
+# 3. Set SECRET_KEY secret (min 32 characters)
+# 4. For production, set real Banesco credentials
+# 5. Update CORS_ORIGINS to your frontend domain
