@@ -43,6 +43,9 @@ clean:
 
 docker-up:
 	docker-compose up -d
+	@echo "Waiting for database to be ready..."
+	@sleep 5
+	alembic upgrade head
 
 docker-down:
 	docker-compose down
