@@ -54,10 +54,13 @@ The API will be available at: http://localhost:8000
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
-### Additional Docs
-- **Development Summary**: [`docs/DEVELOPMENT_SUMMARY.md`](./docs/DEVELOPMENT_SUMMARY.md)
-- **ERD Documentation**: [`docs/ERD-Backend-API.md`](./docs/ERD-Backend-API.md)
-- **Terraform Deployment**: [`terraform/README.md`](./terraform/README.md)
+### Deployment & Infrastructure
+- **Hosting Analysis**: [`docs/HOSTING_ANALYSIS.md`](./docs/HOSTING_ANALYSIS.md) - Análisis profundo de servicios de hosting, proyecciones de recursos y costos
+- **Koyeb Deployment**: [`docs/KOYEB_DEPLOYMENT.md`](./docs/KOYEB_DEPLOYMENT.md) - Guía completa de despliegue en Koyeb (recomendado)
+- **Terraform Guide**: [`terraform/README.md`](./terraform/README.md) - Infraestructura como código con DigitalOcean
+
+### Architecture & Design
+- **ERD Documentation**: [`docs/ERD-Backend-API.md`](./docs/ERD-Backend-API.md) - Diagrama de entidad-relación y estructura de base de datos
 
 ## 🛠️ Development Commands
 
@@ -207,7 +210,7 @@ Target coverage: **85%** for `src/` directory.
 
 ### Option 1: Koyeb (Recommended for Testing/MVP) 🆓
 
-**Quick Start**: See [KOYEB_DEPLOYMENT.md](./KOYEB_DEPLOYMENT.md) for complete guide.
+**Quick Start**: See [`docs/KOYEB_DEPLOYMENT.md`](./docs/KOYEB_DEPLOYMENT.md) for complete guide.
 
 ```bash
 # 1. Create Neon PostgreSQL database (free): https://neon.tech
@@ -231,7 +234,8 @@ Target coverage: **85%** for `src/` directory.
 **Deployment Time**: ~5 minutes  
 **Cost**: **$0/month**
 
-📚 **[Complete Koyeb Deployment Guide →](./KOYEB_DEPLOYMENT.md)**
+📚 **[Complete Koyeb Deployment Guide →](./docs/KOYEB_DEPLOYMENT.md)**  
+📊 **[Hosting Analysis & Comparison →](./docs/HOSTING_ANALYSIS.md)**
 
 ### Option 2: DigitalOcean (IaC with Terraform)
 
