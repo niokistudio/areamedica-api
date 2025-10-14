@@ -9,6 +9,8 @@ Banking Transaction Management System with Banesco integration.
 - Python 3.11+
 - Docker & Docker Compose
 - Make (optional but recommended)
+  - **Linux/Mac**: Usually pre-installed or available via package manager
+  - **Windows**: Use the included `make.sh` script if Make is not available
 
 ### Development Setup
 
@@ -16,7 +18,9 @@ Banking Transaction Management System with Banesco integration.
    ```bash
    git clone <repository-url>
    cd areamedica-api
-   make setup-dev
+   make setup-dev          # Linux/Mac
+   # or
+   ./make.sh setup-dev     # Windows
    ```
 
 2. **Configure environment:**
@@ -28,13 +32,16 @@ Banking Transaction Management System with Banesco integration.
 
 3. **Start services:**
    ```bash
-   make docker-up
-   make migrate
+   make docker-up          # Linux/Mac
+   # or
+   ./make.sh docker-up     # Windows
    ```
 
 4. **Run the application:**
    ```bash
-   make dev
+   make dev                # Linux/Mac
+   # or
+   ./make.sh dev           # Windows
    ```
 
 The API will be available at: http://localhost:8000
@@ -54,6 +61,7 @@ The API will be available at: http://localhost:8000
 
 ## 🛠️ Development Commands
 
+### Linux/Mac
 ```bash
 # Setup development environment
 make setup-dev
@@ -91,6 +99,51 @@ make migrate-downgrade         # Downgrade last migration
 
 # Reset database (WARNING: destroys all data)
 make db-reset
+```
+
+### Windows
+If you don't have `make` installed, use the `make.sh` script instead:
+
+```bash
+# Setup development environment
+./make.sh setup-dev
+
+# Install dependencies
+./make.sh install
+
+# Run development server
+./make.sh dev
+
+# Run tests
+./make.sh test
+
+# Run tests with coverage
+./make.sh test-cov
+
+# Lint code
+./make.sh lint
+
+# Format code
+./make.sh format
+
+# Clean cache files
+./make.sh clean
+
+# Docker commands
+./make.sh docker-up      # Start all services
+./make.sh docker-down    # Stop all services
+./make.sh docker-logs    # View logs
+
+# Database migrations
+./make.sh migrate                       # Run migrations
+./make.sh migrate-create <name>         # Create new migration
+./make.sh migrate-downgrade            # Downgrade last migration
+
+# Reset database (WARNING: destroys all data)
+./make.sh db-reset
+
+# View all available commands
+./make.sh help
 ```
 
 ## 🏗️ Project Structure
