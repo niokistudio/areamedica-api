@@ -49,14 +49,14 @@ The API will be available at: http://localhost:8000
 ## 📖 Documentation
 
 ### API Documentation
-- **Complete API Docs**: [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md) - Guía completa con ejemplos de endpoints, errores estandarizados, autenticación JWT, y datos de prueba
-- **CSV Reference**: [`api_requests_responses.csv`](./api_requests_responses.csv) - Referencia rápida de requests/responses
+- **Complete API Docs**: [`docs/API_DOCUMENTATION.md`](./docs/API_DOCUMENTATION.md) - Guía completa con ejemplos de endpoints, errores estandarizados, autenticación JWT, y datos de prueba
+- **CSV Reference**: [`docs/api_requests_responses.csv`](./docs/api_requests_responses.csv) - Referencia rápida de requests/responses
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
 ### Additional Docs
-- **Development Summary**: [`DEVELOPMENT_SUMMARY.md`](./DEVELOPMENT_SUMMARY.md)
-- **ERD Documentation**: [`ERD-Backend-API.md`](./ERD-Backend-API.md)
+- **Development Summary**: [`docs/DEVELOPMENT_SUMMARY.md`](./docs/DEVELOPMENT_SUMMARY.md)
+- **ERD Documentation**: [`docs/ERD-Backend-API.md`](./docs/ERD-Backend-API.md)
 - **Terraform Deployment**: [`terraform/README.md`](./terraform/README.md)
 
 ## 🛠️ Development Commands
